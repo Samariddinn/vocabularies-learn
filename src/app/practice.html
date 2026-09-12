@@ -1,0 +1,163 @@
+<section class="drill">
+  @switch (phase()) {
+    @case ('idle') {
+      <p class="drill-lede">
+        You read the meaning. You write the word. {{ roundSize }} at a time.
+      </p>
+
+      <div class="drill-scope">
+        <div class="filters" role="group" aria-label="Which words to drill">
+          <button
+            type="button"
+            class="filter"
+            [attr.aria-pressed]="scope() === 'unmastered'"
+            (click)="scope.set('unmastered')"
+          >
+            Still learning
+          </button>
+          <button
+            type="button"
+            class="filter"
+            [attr.aria-pressed]="scope() === 'all'"
+            (click)="scope.set('all')"
+          >
+            Everything
+          </button>
+        </div>
+      </div>
+
+      <div class="session-tally">
+        <div>
+          <div class="session-figure">{{ pool().length }}</div>
+          <div class="session-name">Words waiting</div>
+        </div>
+        <div>
+          <div class="session-figure">{{ counts().known }}</div>
+          <div class="session-name">Memorized so far</div>
+        </div>
+      </div>
+
+      <div class="drill-actions">
+        @if (pool().length === 0) {
+          <p>
+            {{
+              counts().total === 0
+                ? 'Add a word to the notebook and it will show up here.'
+                : 'Every word is memorized. Switch to Everything for a refresher.'
+            }}
+          </p>
+        } @else {
+          <button type="button" class="btn btn-primary btn-lg" (click)="start()">
+            Start a round of {{ pool().length < roundSize ? pool().length : roundSize }}
+          </button>
+          <label class="hint-toggle">
+            <input type="checkbox" [checked]="showHint()" (change)="showHint.set(!showHint())" />
+            Show pronunciation
+          </label>
+        }
+      </div>
+    }
+
+    @case ('done') {
+      <p class="drill-lede">
+        {{
+          wrong() === 0
+            ? 'A clean round. Every word written from memory.'
+            : 'Round finished. The words you missed came back around.'
+        }}
+      </p>
+
+      <div class="session-tally">
+        <div>
+          <div class="session-figure is-right">{{ right() }}</div>
+          <div class="session-name">Written correctly</div>
+        </div>
+        <div>
+          <div class="session-figure is-wrong">{{ wrong() }}</div>
+          <div class="session-name">Missed</div>
+        </div>
+        <div>
+          <div class="session-figure">{{ counts().known }}</div>
+          <div class="session-name">Memorized in all</div>
+        </div>
+      </div>
+
+      <div class="drill-actions">
+        <button type="button" class="btn btn-primary btn-lg" (click)="restart()">Another round</button>
+      </div>
+    }
+
+    @default {
+      <div class="drill-progress">
+        <span>Word {{ position() + 1 }} of {{ total() }}</span>
+        <div class="progress-track">
+          <div class="progress-fill" [style.width.%]="percent()"></div>
+        </div>
+        <span>{{ right() }} right, {{ wrong() }} missed</span>
+      </div>
+
+      @if (current(); as entry) {
+        <form (submit)="submit($event)">
+          <div class="prompt">
+            <div class="entry-head">
+              <span class="label">Write the word that means</span>
+              @if (entry.pos) {
+                <span class="pos">{{ entry.pos }}</span>
+              }
+              @if (showHint() && entry.reading) {
+                <span class="reading">{{ entry.reading }}</span>
+              }
+            </div>
+            <p class="prompt-meaning">{{ entry.meaning }}</p>
+            @if (maskedExample(); as sentence) {
+              <p class="prompt-example">{{ sentence }}</p>
+            }
+          </div>
+
+          <div class="write-line">
+            <input
+              #answer
+              type="text"
+              autocomplete="off"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+              aria-label="Your answer"
+              [value]="typed()"
+              [readOnly]="phase() === 'checked'"
+              [class.is-correct]="phase() === 'checked' && wasCorrect()"
+              [class.is-wrong]="phase() === 'checked' && !wasCorrect()"
+              (input)="setTyped($event)"
+            />
+          </div>
+
+          @if (phase() === 'checked') {
+            <div class="verdict" [class]="wasCorrect() ? 'verdict-correct' : 'verdict-wrong'">
+              <div class="verdict-row">
+                <span class="verdict-label">{{ wasCorrect() ? 'Correct' : 'The word was' }}</span>
+                <span class="verdict-word">{{ entry.word }}</span>
+                @if (entry.reading) {
+                  <span class="reading">{{ entry.reading }}</span>
+                }
+              </div>
+              @if (entry.example) {
+                <p class="example">{{ entry.example }}</p>
+              }
+              @if (!wasCorrect()) {
+                <p class="verdict-note">This one comes back at the end of the round.</p>
+              }
+            </div>
+          }
+
+          <div class="drill-actions">
+            <button type="submit" class="btn btn-primary">
+              {{ phase() === 'checked' ? 'Next word' : 'Check' }}
+            </button>
+            <button type="button" class="btn" (click)="quit()">End round</button>
+            <span class="drill-hint">Enter also works</span>
+          </div>
+        </form>
+      }
+    }
+  }
+</section>

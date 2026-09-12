@@ -1,0 +1,119 @@
+<div class="list-head">
+  <div class="search">
+    <input
+      id="search"
+      type="search"
+      autocomplete="off"
+      aria-label="Search the notebook"
+      placeholder="Search words, meanings, tags"
+      [value]="query()"
+      (input)="setQuery($event)"
+    />
+  </div>
+
+  <div class="filters" role="group" aria-label="Filter by status">
+    @for (option of statuses; track option) {
+      <button
+        type="button"
+        class="filter"
+        [attr.aria-pressed]="status() === option"
+        (click)="status.set(option)"
+      >
+        {{ statusLabel(option) }}
+      </button>
+    }
+  </div>
+
+  <div class="sort-field">
+    <label class="label" for="sort">Order</label>
+    <select id="sort" [value]="sort()" (change)="setSort($event)">
+      <option value="newest">Newest first</option>
+      <option value="alpha">A to Z</option>
+      <option value="weakest">Weakest first</option>
+    </select>
+  </div>
+</div>
+
+@if (tags().length) {
+  <div class="tagline">
+    @for (pair of tags(); track pair[0]) {
+      <button
+        type="button"
+        class="tag-toggle"
+        [attr.aria-pressed]="tag() === pair[0]"
+        (click)="toggleTag(pair[0])"
+      >
+        {{ pair[0] }} <span class="tag-count">{{ pair[1] }}</span>
+      </button>
+    }
+  </div>
+}
+
+@if (visible().length === 0) {
+  <div class="empty">
+    <p class="empty-title">
+      {{ total() === 0 ? 'The notebook is empty.' : 'Nothing matches that.' }}
+    </p>
+    @if (total() === 0) {
+      <p>Write down a word you want to remember, and the drill will ask you for it later.</p>
+      <button type="button" class="btn btn-primary btn-lg" style="margin-top: 16px" (click)="create.emit()">
+        Add your first word
+      </button>
+    } @else {
+      <p>Try a different search, status or tag.</p>
+    }
+  </div>
+} @else {
+  <ul class="entries">
+    @for (entry of visible(); track entry.id) {
+      <li class="entry">
+        <span
+          class="streak"
+          [class.is-complete]="statusOf(entry) === 'known'"
+          [class.is-empty]="entry.streak === 0"
+          [attr.aria-label]="'Written correctly ' + entry.streak + ' times in a row, out of ' + masteryStreak"
+          [attr.title]="entry.streak + ' of ' + masteryStreak + ' in a row'"
+        >
+          @for (pip of pips; track pip) {
+            <span class="pip" [class.is-on]="pip < entry.streak"></span>
+          }
+        </span>
+
+        <div>
+          <div class="entry-head">
+            <span class="headword">{{ entry.word }}</span>
+            @if (entry.reading) {
+              <span class="reading">{{ entry.reading }}</span>
+            }
+            @if (entry.pos) {
+              <span class="pos">{{ entry.pos }}</span>
+            }
+          </div>
+
+          <p class="meaning">{{ entry.meaning }}</p>
+
+          @if (entry.example) {
+            <p class="example">{{ entry.example }}</p>
+          }
+
+          <div class="entry-meta">
+            <span class="entry-score">{{ accuracy(entry) }}</span>
+            @for (t of entry.tags; track t) {
+              <span class="chip">{{ t }}</span>
+            }
+          </div>
+        </div>
+
+        <div class="entry-actions">
+          <button type="button" class="btn btn-quiet" (click)="edit.emit(entry)">Edit</button>
+          @if (entry.attempts > 0) {
+            <button type="button" class="btn btn-quiet" (click)="resetProgress(entry)">Reset</button>
+          }
+          <button type="button" class="btn btn-quiet btn-danger" (click)="confirmDelete(entry)">
+            {{ pendingDelete() === entry.id ? 'Really delete?' : 'Delete' }}
+          </button>
+        </div>
+      </li>
+    }
+  </ul>
+}

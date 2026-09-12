@@ -1,0 +1,108 @@
+<form
+  class="composer"
+  (submit)="submit($event)"
+  (keydown.meta.enter)="submit($event)"
+  (keydown.control.enter)="submit($event)"
+>
+  <div class="composer-body">
+    <div class="composer-grid">
+      <div class="field field-word">
+        <label class="label" for="f-word">Word</label>
+        <input
+          id="f-word"
+          #wordInput
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="threshold"
+          [value]="word()"
+          (input)="word.set(value($event))"
+        />
+      </div>
+
+      <div class="field">
+        <label class="label" for="f-reading">Say it</label>
+        <input
+          id="f-reading"
+          autocomplete="off"
+          placeholder="THRESH-hohld"
+          [value]="reading()"
+          (input)="reading.set(value($event))"
+        />
+      </div>
+
+      <div class="field">
+        <label class="label" for="f-pos">Part of speech</label>
+        <input
+          id="f-pos"
+          autocomplete="off"
+          placeholder="noun"
+          list="pos-options"
+          [value]="pos()"
+          (input)="pos.set(value($event))"
+        />
+        <datalist id="pos-options">
+          <option value="noun"></option>
+          <option value="verb"></option>
+          <option value="adjective"></option>
+          <option value="adverb"></option>
+          <option value="phrase"></option>
+          <option value="phrasal verb"></option>
+          <option value="idiom"></option>
+        </datalist>
+      </div>
+
+      <div class="field">
+        <label class="label" for="f-tags">Tags</label>
+        <input
+          id="f-tags"
+          autocomplete="off"
+          placeholder="C1, exam, phrasal"
+          [value]="tags()"
+          (input)="tags.set(value($event))"
+        />
+        <span class="field-note">Separate them with commas.</span>
+      </div>
+
+      <div class="field field-wide">
+        <label class="label" for="f-meaning">Meaning</label>
+        <textarea
+          id="f-meaning"
+          rows="3"
+          placeholder="the point where something begins"
+          [value]="meaning()"
+          (input)="meaning.set(value($event))"
+        ></textarea>
+        <span class="field-note">This is the side the writing drill shows you.</span>
+      </div>
+
+      <div class="field field-wide">
+        <label class="label" for="f-example">Your sentence</label>
+        <textarea
+          id="f-example"
+          rows="2"
+          placeholder="Write the word in a sentence you would actually say."
+          [value]="example()"
+          (input)="example.set(value($event))"
+        ></textarea>
+        <span class="field-note">Optional. The drill blanks the word out of it.</span>
+      </div>
+    </div>
+
+    @if (problem(); as message) {
+      <p class="notice">{{ message }}</p>
+    }
+    @if (justAdded(); as added) {
+      <p class="toast">Added <strong>{{ added }}</strong>. The form is clear for the next one.</p>
+    }
+  </div>
+
+  <div class="composer-foot">
+    <button type="submit" class="btn btn-primary btn-lg">
+      {{ editing() ? 'Save changes' : 'Add word' }}
+    </button>
+    <button type="button" class="btn btn-lg" (click)="cancel()">
+      {{ editing() ? 'Cancel' : 'Done' }}
+    </button>
+    <span class="composer-hint"><kbd>⌘</kbd><kbd>↵</kbd> saves, <kbd>Esc</kbd> closes</span>
+  </div>
+</form>
