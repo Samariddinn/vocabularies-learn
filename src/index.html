@@ -1,26 +1,49 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Vocabulary Notebook</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Karla:ital,wght@0,400;0,500;0,700;1,400&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&display=swap">
-  <script>
-    // Applied before first paint so the page never flashes the wrong theme.
-    try {
-      var saved = localStorage.getItem('vocab-theme');
-      if (saved === 'light' || saved === 'dark') {
-        document.documentElement.setAttribute('data-theme', saved);
-      }
-    } catch (e) {}
-  </script>
-</head>
-<body>
-  <app-root></app-root>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>Vocabulary Notebook</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
+    <!-- Installable as an app: manifest for Android/desktop, these for iOS's
+         older "Add to Home Screen", which ignores manifest.json. -->
+    <meta name="theme-color" content="#fbfcfc" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Vocab Notebook" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Karla:ital,wght@0,400;0,500;0,700;1,400&amp;family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400;1,7..72,500&amp;display=swap"
+    />
+    <script>
+      // Applied before first paint so the page never flashes the wrong theme.
+      // Also syncs the browser/status-bar chrome color to match.
+      try {
+        var saved = localStorage.getItem('vocab-theme');
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+        var isDark =
+          saved === 'dark' ||
+          (saved !== 'light' &&
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document
+          .querySelector('meta[name="theme-color"]')
+          .setAttribute('content', isDark ? '#1c2024' : '#fbfcfc');
+      } catch (e) {}
+    </script>
+    <link rel="manifest" href="manifest.webmanifest" />
+  </head>
+  <body>
+    <app-root></app-root>
+    <noscript>Please enable JavaScript to continue using this application.</noscript>
+  </body>
 </html>

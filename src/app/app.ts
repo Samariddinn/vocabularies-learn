@@ -62,6 +62,7 @@ export class App {
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem(THEME_KEY, next);
     }
+    syncThemeColor(next);
   }
 
   protected exportBackup(): void {
@@ -100,4 +101,14 @@ export class App {
 function readTheme(): Theme {
   const stored = typeof localStorage === 'undefined' ? null : localStorage.getItem(THEME_KEY);
   return stored === 'light' || stored === 'dark' ? stored : 'system';
+}
+
+/** Keeps the browser/status-bar chrome (meta theme-color) matching the page. */
+function syncThemeColor(theme: Theme): void {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) return;
+  const isDark =
+    theme === 'dark' ||
+    (theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+  meta.setAttribute('content', isDark ? '#1c2024' : '#fbfcfc');
 }
