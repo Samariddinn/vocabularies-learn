@@ -1,0 +1,43 @@
+[build]
+  command = "npm run build"
+  publish = "dist/note/browser"
+
+[build.environment]
+  # Angular 22 requires node ^22.22.3 || ^24.15.0 || >=26. Netlify's default
+  # is older than that and the build fails without this pin.
+  NODE_VERSION = "22"
+
+# Single-page app: unknown paths serve index.html. Real files on disk still
+# win over this rule, so the service worker and assets are unaffected.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# The service worker and its manifest must never be served stale, or the app
+# pins itself to an old release and never picks up a deploy.
+[[headers]]
+  for = "/ngsw-worker.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/ngsw.json"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/safety-worker.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Content-Type = "application/manifest+json"
