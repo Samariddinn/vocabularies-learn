@@ -32,23 +32,16 @@
 
       <div class="field">
         <label class="label" for="f-pos">Part of speech</label>
-        <input
-          id="f-pos"
-          autocomplete="off"
-          placeholder="noun"
-          list="pos-options"
-          [value]="pos()"
-          (input)="pos.set(value($event))"
-        />
-        <datalist id="pos-options">
-          <option value="noun"></option>
-          <option value="verb"></option>
-          <option value="adjective"></option>
-          <option value="adverb"></option>
-          <option value="phrase"></option>
-          <option value="phrasal verb"></option>
-          <option value="idiom"></option>
-        </datalist>
+        <select id="f-pos" [value]="pos()" (change)="pos.set(value($event))">
+          <option value="">—</option>
+          <option value="noun">noun</option>
+          <option value="verb">verb</option>
+          <option value="adjective">adjective</option>
+          <option value="adverb">adverb</option>
+          <option value="phrase">phrase</option>
+          <option value="phrasal verb">phrasal verb</option>
+          <option value="idiom">idiom</option>
+        </select>
       </div>
 
       <div class="field">

@@ -94,6 +94,11 @@ export class Library {
     this.store.resetProgress(entry.id);
   }
 
+  protected setStatus(entry: Entry, event: Event): void {
+    const status = (event.target as HTMLSelectElement).value as Status;
+    this.store.setStatus(entry.id, status);
+  }
+
   protected setQuery(event: Event): void {
     this.query.set((event.target as HTMLInputElement).value);
   }

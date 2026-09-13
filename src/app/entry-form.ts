@@ -110,6 +110,6 @@ export class EntryForm {
   }
 
   protected value(event: Event): string {
-    return (event.target as HTMLInputElement | HTMLTextAreaElement).value;
+    return (event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
   }
 }

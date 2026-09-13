@@ -200,6 +200,35 @@ export class VocabStore {
     await this.update(id, { streak: 0, attempts: 0, correct: 0, reviewedAt: null });
   }
 
+  /** Lets a word's status be set by hand instead of only earned through drilling. */
+  async setStatus(id: string, status: Status): Promise<void> {
+    const entry = this.all().find((item) => item.id === id);
+    if (!entry) return;
+    switch (status) {
+      case 'known':
+        // Streak at the mastery line is what "known" means — keep whatever
+        // attempt history the word already has.
+        await this.update(id, {
+          streak: Math.max(entry.streak, MASTERY_STREAK),
+          attempts: Math.max(entry.attempts, MASTERY_STREAK),
+          correct: Math.max(entry.correct, MASTERY_STREAK),
+          reviewedAt: Date.now(),
+        });
+        return;
+      case 'learning':
+        // Below mastery but with at least one attempt on record.
+        await this.update(id, {
+          streak: 0,
+          attempts: Math.max(entry.attempts, 1),
+          reviewedAt: Date.now(),
+        });
+        return;
+      case 'new':
+        await this.resetProgress(id);
+        return;
+    }
+  }
+
   exportJson(): string {
     return JSON.stringify({ app: 'vocab-notebook', version: 1, entries: this.entries() }, null, 2);
   }

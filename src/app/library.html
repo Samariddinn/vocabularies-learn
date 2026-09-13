@@ -105,6 +105,16 @@
         </div>
 
         <div class="entry-actions">
+          <select
+            class="status-select"
+            [attr.aria-label]="'Status for ' + entry.word"
+            [value]="statusOf(entry)"
+            (change)="setStatus(entry, $event)"
+          >
+            <option value="new">Not drilled</option>
+            <option value="learning">Learning</option>
+            <option value="known">Memorized</option>
+          </select>
           <button type="button" class="btn btn-quiet" (click)="edit.emit(entry)">Edit</button>
           @if (entry.attempts > 0) {
             <button type="button" class="btn btn-quiet" (click)="resetProgress(entry)">Reset</button>
