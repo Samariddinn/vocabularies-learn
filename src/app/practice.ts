@@ -46,8 +46,7 @@ export class Practice {
   protected readonly maskedExample = computed(() => {
     const entry = this.current();
     if (!entry?.example) return null;
-    const pattern = new RegExp(escapeRegExp(entry.word), 'gi');
-    return entry.example.replace(pattern, '———');
+    return maskAnswer(entry.example, entry.word);
   });
 
   protected start(): void {
@@ -111,6 +110,54 @@ export class Practice {
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const MASK = '———';
+
+/** Small words that give nothing away on their own ("at" in "at least"). */
+const FILLER = new Set([
+  'a', 'an', 'the', 'to', 'of', 'at', 'in', 'on', 'for', 'by', 'with', 'up', 'out', 'off',
+  'down', 'over', 'and', 'or', 'but', 'as', 'from', 'into', 'be', 'is', 'it', 'its',
+  'one', "one's", 'someone', 'something', 'sb', 'sth', 'my', 'your', 'his', 'her', 'their', 'our',
+]);
+
+/** A word plus its regular endings: sell → sells, selling; make → making; stop → stopped. */
+function inflected(token: string): string {
+  const base = escapeRegExp(token);
+  if (!/^[a-z]{3,}$/.test(token)) return base;
+  const forms = [`${base}(?:s|es|ed|d|ing)?`];
+  if (token.endsWith('e')) forms.push(`${escapeRegExp(token.slice(0, -1))}(?:ing|ed)`);
+  if (token.endsWith('y')) forms.push(`${escapeRegExp(token.slice(0, -1))}(?:ies|ied)`);
+  forms.push(`${base}${token.at(-1)}(?:ing|ed)`);
+  return `(?:${forms.join('|')})`;
+}
+
+/**
+ * Hides the answer inside the example sentence, including a phrase that has been
+ * split up or conjugated: for "sell at a loss", "selling the products at a loss"
+ * becomes "——— the products ———". Any run of two or more of the phrase's words
+ * is hidden, and so is any single word of it that isn't filler.
+ */
+function maskAnswer(sentence: string, answer: string): string {
+  const tokens = normalize(answer).split(' ').filter(Boolean);
+  if (tokens.length === 0) return sentence;
+
+  const parts: string[] = [];
+  for (let size = tokens.length; size >= 1; size--) {
+    for (let start = 0; start + size <= tokens.length; start++) {
+      const run = tokens.slice(start, start + size);
+      const whole = size === tokens.length;
+      // "at a" alone would blank "at a profit" too, so a part needs a real word in it.
+      if (!whole && run.every((token) => FILLER.has(token) || token.length < 3)) continue;
+      parts.push(run.map(inflected).join('\\s+'));
+    }
+  }
+
+  // Longest runs come first, so the alternation prefers "at a loss" over "loss".
+  const pattern = new RegExp(`(?<![\\p{L}'])(?:${parts.join('|')})(?![\\p{L}])`, 'giu');
+  return sentence
+    .replace(pattern, MASK)
+    .replace(new RegExp(`${MASK}(?:\\s+${MASK})+`, 'g'), MASK);
 }
 
 /** Weakest and least-recently-seen words first, shuffled inside each streak tier. */

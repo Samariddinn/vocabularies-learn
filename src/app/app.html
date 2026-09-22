@@ -105,5 +105,5 @@
     <button type="button" class="btn btn-quiet" aria-label="Close" (click)="closeComposer()">✕</button>
   </div>
 
-  <app-entry-form [editing]="editing()" (done)="closeComposer()" />
+  <app-entry-form [editing]="editing()" (done)="closeComposer()" (added)="flash('Added ' + $event + '.')" />
 </dialog>

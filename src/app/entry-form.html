@@ -79,13 +79,22 @@
         ></textarea>
         <span class="field-note">Optional. The drill blanks the word out of it.</span>
       </div>
+
+      <div class="field field-wide">
+        <label class="label" for="f-collocations">Collocations</label>
+        <textarea
+          id="f-collocations"
+          rows="3"
+          placeholder="cross the threshold&#10;pain threshold&#10;on the threshold of"
+          [value]="collocations()"
+          (input)="collocations.set(value($event))"
+        ></textarea>
+        <span class="field-note">Optional. One per line — the words it usually goes with.</span>
+      </div>
     </div>
 
     @if (problem(); as message) {
       <p class="notice">{{ message }}</p>
-    }
-    @if (justAdded(); as added) {
-      <p class="toast">Added <strong>{{ added }}</strong>. The form is clear for the next one.</p>
     }
   </div>
 
@@ -94,7 +103,7 @@
       {{ editing() ? 'Save changes' : 'Add word' }}
     </button>
     <button type="button" class="btn btn-lg" (click)="cancel()">
-      {{ editing() ? 'Cancel' : 'Done' }}
+      Cancel
     </button>
     <span class="composer-hint"><kbd>⌘</kbd><kbd>↵</kbd> saves, <kbd>Esc</kbd> closes</span>
   </div>

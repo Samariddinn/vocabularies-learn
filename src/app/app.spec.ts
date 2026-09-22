@@ -11,6 +11,7 @@ function entry(patch: Partial<Entry>): Entry {
     pos: '',
     meaning: 'to stay longer than expected',
     example: '',
+    collocations: [],
     tags: [],
     createdAt: 0,
     reviewedAt: null,

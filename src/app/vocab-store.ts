@@ -7,6 +7,8 @@ export interface Entry {
   pos: string;
   meaning: string;
   example: string;
+  /** Word partnerships worth learning with it ("cross the threshold"). Optional. */
+  collocations: string[];
   tags: string[];
   createdAt: number;
   reviewedAt: number | null;
@@ -18,7 +20,7 @@ export interface Entry {
 
 export type Status = 'new' | 'learning' | 'known';
 
-export type EntryDraft = Pick<Entry, 'word' | 'reading' | 'pos' | 'meaning' | 'example' | 'tags'>;
+export type EntryDraft = Pick<Entry, 'word' | 'reading' | 'pos' | 'meaning' | 'example' | 'collocations' | 'tags'>;
 
 /** Consecutive correct spellings before a word counts as memorized. */
 export const MASTERY_STREAK = 5;
@@ -105,7 +107,8 @@ export class VocabStore {
         await Promise.all(seeded.map((entry) => this.put(entry)));
         this.all.set(seeded);
       } else {
-        this.all.set(stored);
+        // Entries saved before collocations existed have no array.
+        this.all.set(stored.map((entry) => ({ ...entry, collocations: entry.collocations ?? [] })));
       }
     } catch (error) {
       this.storageError.set(
@@ -256,6 +259,9 @@ export class VocabStore {
         pos: candidate.pos ?? '',
         meaning: candidate.meaning ?? '',
         example: candidate.example ?? '',
+        collocations: Array.isArray(candidate.collocations)
+          ? candidate.collocations.filter((c) => typeof c === 'string')
+          : [],
         tags: Array.isArray(candidate.tags) ? candidate.tags.filter((t) => typeof t === 'string') : [],
         createdAt: typeof candidate.createdAt === 'number' ? candidate.createdAt : Date.now(),
         reviewedAt: typeof candidate.reviewedAt === 'number' ? candidate.reviewedAt : null,

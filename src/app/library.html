@@ -5,7 +5,7 @@
       type="search"
       autocomplete="off"
       aria-label="Search the notebook"
-      placeholder="Search words, meanings, tags"
+      placeholder="Search words, meanings, collocations, tags"
       [value]="query()"
       (input)="setQuery($event)"
     />
@@ -94,6 +94,14 @@
 
           @if (entry.example) {
             <p class="example">{{ entry.example }}</p>
+          }
+
+          @if (entry.collocations?.length) {
+            <ul class="collocations" aria-label="Collocations">
+              @for (c of entry.collocations; track c) {
+                <li class="chip">{{ c }}</li>
+              }
+            </ul>
           }
 
           <div class="entry-meta">

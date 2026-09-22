@@ -11,6 +11,8 @@ export class EntryForm {
 
   readonly editing = input<Entry | null>(null);
   readonly done = output<void>();
+  /** Emits the word after a new entry is saved, so the shell can confirm it. */
+  readonly added = output<string>();
 
   private readonly wordInput = viewChild<ElementRef<HTMLInputElement>>('wordInput');
 
@@ -19,9 +21,9 @@ export class EntryForm {
   protected readonly pos = signal('');
   protected readonly meaning = signal('');
   protected readonly example = signal('');
+  protected readonly collocations = signal('');
   protected readonly tags = signal('');
   protected readonly problem = signal<string | null>(null);
-  protected readonly justAdded = signal<string | null>(null);
 
   constructor() {
     effect(() => {
@@ -32,9 +34,9 @@ export class EntryForm {
       this.pos.set(entry.pos);
       this.meaning.set(entry.meaning);
       this.example.set(entry.example);
+      this.collocations.set((entry.collocations ?? []).join('\n'));
       this.tags.set(entry.tags.join(', '));
       this.problem.set(null);
-      this.justAdded.set(null);
       this.wordInput()?.nativeElement.focus();
     });
   }
@@ -67,6 +69,10 @@ export class EntryForm {
       reading: this.reading().trim(),
       pos: this.pos().trim(),
       example: this.example().trim(),
+      collocations: this.collocations()
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean),
       tags: this.tags()
         .split(',')
         .map((tag) => tag.trim())
@@ -89,8 +95,8 @@ export class EntryForm {
 
     await this.store.add(draft);
     this.reset();
-    this.justAdded.set(word);
-    this.wordInput()?.nativeElement.focus();
+    this.added.emit(word);
+    this.done.emit();
   }
 
   protected cancel(): void {
@@ -104,9 +110,9 @@ export class EntryForm {
     this.pos.set('');
     this.meaning.set('');
     this.example.set('');
+    this.collocations.set('');
     this.tags.set('');
     this.problem.set(null);
-    this.justAdded.set(null);
   }
 
   protected value(event: Event): string {

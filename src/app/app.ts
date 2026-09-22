@@ -92,7 +92,7 @@ export class App {
     }
   }
 
-  private flash(text: string): void {
+  protected flash(text: string): void {
     this.message.set(text);
     setTimeout(() => this.message.set(null), 5000);
   }

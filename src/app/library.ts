@@ -40,6 +40,7 @@ export class Library {
         entry.word.toLowerCase().includes(needle) ||
         entry.meaning.toLowerCase().includes(needle) ||
         entry.example.toLowerCase().includes(needle) ||
+        entry.collocations?.some((c) => c.toLowerCase().includes(needle)) ||
         entry.tags.some((t) => t.toLowerCase().includes(needle))
       );
     });
