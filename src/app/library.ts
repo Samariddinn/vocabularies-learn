@@ -1,4 +1,5 @@
 import { Component, computed, inject, output, signal } from '@angular/core';
+import { SpeakButton } from './speak-button';
 import { Entry, Status, VocabStore, MASTERY_STREAK, statusOf } from './vocab-store';
 
 type SortKey = 'newest' | 'alpha' | 'weakest';
@@ -6,6 +7,7 @@ type SortKey = 'newest' | 'alpha' | 'weakest';
 /** The notebook column: every word you have written down, as dictionary entries. */
 @Component({
   selector: 'app-library',
+  imports: [SpeakButton],
   templateUrl: './library.html',
 })
 export class Library {

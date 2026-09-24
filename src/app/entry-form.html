@@ -8,15 +8,30 @@
     <div class="composer-grid">
       <div class="field field-word">
         <label class="label" for="f-word">Word</label>
-        <input
-          id="f-word"
-          #wordInput
-          autocomplete="off"
-          spellcheck="false"
-          placeholder="threshold"
-          [value]="word()"
-          (input)="word.set(value($event))"
-        />
+        <div class="word-row">
+          <input
+            id="f-word"
+            #wordInput
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="threshold"
+            [value]="word()"
+            (input)="onWordInput($event)"
+            (blur)="lookUp()"
+          />
+          <app-speak-button [text]="word()" />
+        </div>
+        @switch (lookupState()) {
+          @case ('loading') {
+            <span class="field-note">Looking it up…</span>
+          }
+          @case ('missing') {
+            <span class="field-note">Not in the dictionary — fill the rest in yourself.</span>
+          }
+          @case ('offline') {
+            <span class="field-note">Couldn't reach the dictionary. Fill it in yourself.</span>
+          }
+        }
       </div>
 
       <div class="field">
@@ -26,22 +41,32 @@
           autocomplete="off"
           placeholder="THRESH-hohld"
           [value]="reading()"
-          (input)="reading.set(value($event))"
+          (input)="setReading(value($event))"
         />
       </div>
 
       <div class="field">
         <label class="label" for="f-pos">Part of speech</label>
-        <select id="f-pos" [value]="pos()" (change)="pos.set(value($event))">
-          <option value="">—</option>
-          <option value="noun">noun</option>
-          <option value="verb">verb</option>
-          <option value="adjective">adjective</option>
-          <option value="adverb">adverb</option>
-          <option value="phrase">phrase</option>
-          <option value="phrasal verb">phrasal verb</option>
-          <option value="idiom">idiom</option>
+        <select id="f-pos" (change)="setPos(value($event))">
+          <option value="" [selected]="!pos()">—</option>
+          @for (part of partsOfSpeech; track part) {
+            <option [value]="part" [selected]="pos() === part">{{ part }}</option>
+          }
         </select>
+        @if (posChoices().length) {
+          <div class="suggestions" role="group" aria-label="Parts of speech the dictionary lists">
+            @for (part of posChoices(); track part) {
+              <button
+                type="button"
+                class="tag-toggle"
+                [attr.aria-pressed]="pos() === part"
+                (click)="setPos(part)"
+              >
+                {{ part }}
+              </button>
+            }
+          </div>
+        }
       </div>
 
       <div class="field">
@@ -66,6 +91,16 @@
           (input)="meaning.set(value($event))"
         ></textarea>
         <span class="field-note">This is the side the writing drill shows you.</span>
+        @if (!meaning().trim() && suggestedMeanings().length) {
+          <div class="suggestions suggestions-stacked">
+            <span class="field-note">From the dictionary — tap one to use it, or write your own:</span>
+            @for (sense of suggestedMeanings(); track sense.definition) {
+              <button type="button" class="suggestion" (click)="meaning.set(sense.definition)">
+                {{ sense.definition }}
+              </button>
+            }
+          </div>
+        }
       </div>
 
       <div class="field field-wide">

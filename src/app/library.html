@@ -82,6 +82,7 @@
         <div>
           <div class="entry-head">
             <span class="headword">{{ entry.word }}</span>
+            <app-speak-button [text]="entry.word" />
             @if (entry.reading) {
               <span class="reading">{{ entry.reading }}</span>
             }

@@ -137,6 +137,7 @@
               <div class="verdict-row">
                 <span class="verdict-label">{{ wasCorrect() ? 'Correct' : 'The word was' }}</span>
                 <span class="verdict-word">{{ entry.word }}</span>
+                <app-speak-button [text]="entry.word" />
                 @if (entry.reading) {
                   <span class="reading">{{ entry.reading }}</span>
                 }

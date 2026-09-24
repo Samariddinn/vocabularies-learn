@@ -1,4 +1,5 @@
 import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
+import { SpeakButton } from './speak-button';
 import { Entry, VocabStore, normalize, statusOf } from './vocab-store';
 
 type Phase = 'idle' | 'writing' | 'checked' | 'done';
@@ -9,6 +10,7 @@ const ROUND_SIZE = 20;
 /** The writing drill: meaning on screen, word out of your own head. */
 @Component({
   selector: 'app-practice',
+  imports: [SpeakButton],
   templateUrl: './practice.html',
 })
 export class Practice {
