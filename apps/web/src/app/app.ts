@@ -1,8 +1,9 @@
 import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
-import { EntryForm } from './entry-form';
-import { Library } from './library';
-import { Practice } from './practice';
-import { Entry, VocabStore } from './vocab-store';
+import { EntryForm } from './features/entry-form/entry-form';
+import { Library } from './features/library/library';
+import { Practice } from './features/practice/practice';
+import { Entry, VocabStore } from './core/services/vocab-store';
+import { RequestApi } from './core/services/request-api';
 
 type Tab = 'notebook' | 'drill';
 type Theme = 'light' | 'dark' | 'system';
@@ -25,6 +26,15 @@ export class App {
   protected readonly expanded = signal(false);
   protected readonly theme = signal<Theme>(readTheme());
   protected readonly message = signal<string | null>(null);
+
+  // TEST: check the connection to the NestJS backend. Remove when done.
+  private readonly requestApi = inject(RequestApi);
+  constructor() {
+    this.requestApi.get<{ status: string; timestamp: string }>('health').subscribe({
+      next: (res) => console.log('[API] backend connected:', res),
+      error: (err) => console.error('[API] backend request failed:', err),
+    });
+  }
 
   protected openComposer(): void {
     this.editing.set(null);

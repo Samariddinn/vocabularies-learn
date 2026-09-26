@@ -10,9 +10,9 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { Dictionary, Lookup, PARTS_OF_SPEECH } from './dictionary';
-import { SpeakButton } from './speak-button';
-import { Entry, VocabStore } from './vocab-store';
+import { Dictionary, Lookup, PARTS_OF_SPEECH } from '../../core/services/dictionary';
+import { SpeakButton } from '../../shared/components/speak-button/speak-button';
+import { Entry, VocabStore } from '../../core/services/vocab-store';
 
 /** How long typing has to pause before the word is looked up. */
 const LOOKUP_DELAY_MS = 600;

@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { Speech } from './speech';
+import { Speech } from '../../../core/services/speech';
 
 /** A speaker icon that reads `text` aloud. Renders nothing where the browser can't speak. */
 @Component({

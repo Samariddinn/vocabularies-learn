@@ -1,6 +1,6 @@
 import { Component, computed, inject, output, signal } from '@angular/core';
-import { SpeakButton } from './speak-button';
-import { Entry, Status, VocabStore, MASTERY_STREAK, statusOf } from './vocab-store';
+import { SpeakButton } from '../../shared/components/speak-button/speak-button';
+import { Entry, Status, VocabStore, MASTERY_STREAK, statusOf } from '../../core/services/vocab-store';
 
 type SortKey = 'newest' | 'alpha' | 'weakest';
 

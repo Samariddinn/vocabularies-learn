@@ -1,6 +1,6 @@
 import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
-import { SpeakButton } from './speak-button';
-import { Entry, VocabStore, normalize, statusOf } from './vocab-store';
+import { SpeakButton } from '../../shared/components/speak-button/speak-button';
+import { Entry, VocabStore, normalize, statusOf } from '../../core/services/vocab-store';
 
 type Phase = 'idle' | 'writing' | 'checked' | 'done';
 type Scope = 'unmastered' | 'all';
