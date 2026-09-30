@@ -31,6 +31,9 @@
       <button type="button" class="tab" role="tab" [attr.aria-selected]="tab() === 'notebook'" (click)="tab.set('notebook')">
         Notebook <span class="tab-count">{{ store.counts().total }}</span>
       </button>
+      <button type="button" class="tab" role="tab" [attr.aria-selected]="tab() === 'review'" (click)="tab.set('review')">
+        Review
+      </button>
       <button type="button" class="tab" role="tab" [attr.aria-selected]="tab() === 'drill'" (click)="tab.set('drill')">
         Writing drill
       </button>
@@ -79,6 +82,8 @@
       <p class="label">Opening the notebook…</p>
     } @else if (tab() === 'notebook') {
       <app-library (edit)="startEdit($event)" (create)="openComposer()" />
+    } @else if (tab() === 'review') {
+      <app-review />
     } @else {
       <app-practice />
     }

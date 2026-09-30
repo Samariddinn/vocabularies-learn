@@ -1,0 +1,189 @@
+<section class="drill">
+  @switch (phase()) {
+    @case ('idle') {
+      <p class="drill-lede">
+        Go back over the words you have kept. Press Enter for each one, and hear it read out.
+      </p>
+
+      <div class="drill-scope">
+        <div class="filters" role="group" aria-label="Which words to go over">
+          <button
+            type="button"
+            class="filter"
+            [attr.aria-pressed]="scope() === 'known'"
+            (click)="scope.set('known')"
+          >
+            Memorized
+          </button>
+          <button
+            type="button"
+            class="filter"
+            [attr.aria-pressed]="scope() === 'learning'"
+            (click)="scope.set('learning')"
+          >
+            Learning
+          </button>
+          <button
+            type="button"
+            class="filter"
+            [attr.aria-pressed]="scope() === 'all'"
+            (click)="scope.set('all')"
+          >
+            Everything
+          </button>
+        </div>
+      </div>
+
+      <div class="drill-scope">
+        <div class="filters" role="group" aria-label="In what order">
+          <button
+            type="button"
+            class="filter"
+            [attr.aria-pressed]="order() === 'added'"
+            (click)="order.set('added')"
+          >
+            In the order added
+          </button>
+          <button
+            type="button"
+            class="filter"
+            [attr.aria-pressed]="order() === 'shuffled'"
+            (click)="order.set('shuffled')"
+          >
+            Shuffled
+          </button>
+        </div>
+      </div>
+
+      <div class="session-tally">
+        <div>
+          <div class="session-figure">{{ pool().length }}</div>
+          <div class="session-name">Words to go over</div>
+        </div>
+        <div>
+          <div class="session-figure">{{ counts().known }}</div>
+          <div class="session-name">Memorized so far</div>
+        </div>
+      </div>
+
+      <div class="drill-actions">
+        @if (pool().length === 0) {
+          <p>
+            {{
+              counts().total === 0
+                ? 'Add a word to the notebook and it will show up here.'
+                : 'No words here yet. Try Everything.'
+            }}
+          </p>
+        } @else {
+          <button type="button" class="btn btn-primary btn-lg" (click)="start()">
+            Go over {{ pool().length }} {{ pool().length === 1 ? 'word' : 'words' }}
+          </button>
+          @if (speech.supported) {
+            <label class="hint-toggle">
+              <input type="checkbox" [checked]="aloud()" (change)="aloud.set(!aloud())" />
+              Read aloud
+            </label>
+          }
+          <span class="drill-hint">Or press Enter</span>
+        }
+      </div>
+    }
+
+    @case ('done') {
+      <p class="drill-lede">That was every word. Well kept.</p>
+
+      <div class="session-tally">
+        <div>
+          <div class="session-figure">{{ total() }}</div>
+          <div class="session-name">Words gone over</div>
+        </div>
+        <div>
+          <div class="session-figure">{{ counts().known }}</div>
+          <div class="session-name">Memorized in all</div>
+        </div>
+      </div>
+
+      <div class="drill-actions">
+        <button type="button" class="btn btn-primary btn-lg" (click)="restart()">
+          Go over again
+        </button>
+      </div>
+    }
+
+    @default {
+      <div class="drill-progress">
+        <span>Word {{ position() + 1 }} of {{ total() }}</span>
+        <div class="progress-track">
+          <div class="progress-fill" [style.width.%]="percent()"></div>
+        </div>
+      </div>
+
+      @if (current(); as entry) {
+        <article class="review-card" aria-live="polite">
+          <div class="entry-head">
+            <span class="review-word">{{ entry.word }}</span>
+            <app-speak-button [text]="entry.word" />
+            @if (entry.reading) {
+              <span class="reading">{{ entry.reading }}</span>
+            }
+            @if (entry.pos) {
+              <span class="pos">{{ entry.pos }}</span>
+            }
+          </div>
+
+          <p
+            class="review-status"
+            [class.is-known]="entry.streak >= masteryStreak"
+            [class.is-learning]="entry.attempts > 0 && entry.streak < masteryStreak"
+          >
+            {{ statusLabel(entry) }}
+          </p>
+
+          <p class="prompt-meaning">{{ entry.meaning }}</p>
+
+          @if (entry.example) {
+            <p class="prompt-example">{{ entry.example }}</p>
+          }
+
+          @if (entry.collocations?.length) {
+            <ul class="collocations" aria-label="Collocations">
+              @for (c of entry.collocations; track c) {
+                <li class="chip">{{ c }}</li>
+              }
+            </ul>
+          }
+
+          @if (entry.tags.length) {
+            <div class="entry-meta">
+              @for (t of entry.tags; track t) {
+                <span class="chip">{{ t }}</span>
+              }
+            </div>
+          }
+        </article>
+
+        <div class="drill-actions">
+          <button type="button" class="btn btn-primary" (click)="next()">
+            {{ position() + 1 < total() ? 'Next word' : 'Finish' }}
+          </button>
+          <button type="button" class="btn" [disabled]="position() === 0" (click)="previous()">
+            Back
+          </button>
+          @if (speech.supported) {
+            <button
+              type="button"
+              class="btn"
+              [attr.aria-pressed]="readingNow(entry)"
+              (click)="readAgain()"
+            >
+              {{ readingNow(entry) ? 'Stop' : 'Read aloud' }}
+            </button>
+          }
+          <button type="button" class="btn btn-quiet" (click)="finish()">End</button>
+          <span class="drill-hint">Enter next · ← back · Space read</span>
+        </div>
+      }
+    }
+  }
+</section>

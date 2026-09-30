@@ -1390,3 +1390,40 @@ body {
   accent-color: var(--accent);
   cursor: pointer;
 }
+
+/* --- review --------------------------------------------------------------- */
+
+/* The drill's prompt, with the word on top instead of hidden. */
+.review-card {
+  padding: 34px 0 4px;
+  animation: verdict-in var(--dur-2) var(--ease);
+}
+
+.review-word {
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.014em;
+  text-wrap: balance;
+}
+
+.review-status {
+  font-size: 13.5px;
+  color: var(--ink-3);
+  margin: 6px 0 0;
+}
+
+.review-status.is-known {
+  color: var(--moss);
+}
+
+.review-status.is-learning {
+  color: var(--amber);
+}
+
+@media (max-width: 480px) {
+  .review-word {
+    font-size: 28px;
+  }
+}

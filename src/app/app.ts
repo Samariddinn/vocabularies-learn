@@ -2,15 +2,16 @@ import { Component, ElementRef, inject, signal, viewChild } from '@angular/core'
 import { EntryForm } from './entry-form';
 import { Library } from './library';
 import { Practice } from './practice';
+import { Review } from './review';
 import { Entry, VocabStore } from './vocab-store';
 
-type Tab = 'notebook' | 'drill';
+type Tab = 'notebook' | 'review' | 'drill';
 type Theme = 'light' | 'dark' | 'system';
 
 const THEME_KEY = 'vocab-theme';
 
 @Component({
-  imports: [EntryForm, Library, Practice],
+  imports: [EntryForm, Library, Practice, Review],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
