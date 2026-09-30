@@ -1,0 +1,58 @@
+<main class="auth-page">
+  <div class="auth-card">
+    <header class="auth-head">
+      <p class="auth-brand">Vocabulary notebook</p>
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-sub">Sign in to your notebook.</p>
+    </header>
+
+    @if (justRegistered) {
+      <p class="toast">Account created. Sign in with your new password.</p>
+    }
+
+    <form class="auth-form" (submit)="submit($event)" novalidate>
+      <div class="field">
+        <label class="label" for="l-login">Login</label>
+        <input
+          id="l-login"
+          #loginInput
+          autocomplete="username"
+          spellcheck="false"
+          autocapitalize="off"
+          [value]="login()"
+          (input)="login.set(value($event))"
+        />
+        @if (submitted() && loginError(); as error) {
+          <span class="field-note field-error">{{ error }}</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="label" for="l-password">Password</label>
+        <input
+          id="l-password"
+          #passwordInput
+          type="password"
+          autocomplete="current-password"
+          [value]="password()"
+          (input)="password.set(value($event))"
+        />
+        @if (submitted() && passwordError(); as error) {
+          <span class="field-note field-error">{{ error }}</span>
+        }
+      </div>
+
+      @if (problem(); as message) {
+        <p class="notice">{{ message }}</p>
+      }
+
+      <button type="submit" class="btn btn-primary btn-lg auth-submit" [disabled]="submitting()">
+        {{ submitting() ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+
+    <p class="auth-switch">
+      Don't have an account? <a routerLink="/register">Create one</a>
+    </p>
+  </div>
+</main>

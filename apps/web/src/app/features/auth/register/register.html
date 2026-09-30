@@ -1,0 +1,58 @@
+<main class="auth-page">
+  <div class="auth-card">
+    <header class="auth-head">
+      <p class="auth-brand">Vocabulary notebook</p>
+      <h1 class="auth-title">Create an account</h1>
+      <p class="auth-sub">Keep your words safe and reach them from any device.</p>
+    </header>
+
+    <form class="auth-form" (submit)="submit($event)" novalidate>
+      <div class="field">
+        <label class="label" for="r-login">Login</label>
+        <input
+          id="r-login"
+          #loginInput
+          autocomplete="username"
+          spellcheck="false"
+          autocapitalize="off"
+          placeholder="samariddin"
+          [value]="login()"
+          (input)="login.set(value($event))"
+        />
+        @if (submitted() && loginError(); as error) {
+          <span class="field-note field-error">{{ error }}</span>
+        } @else {
+          <span class="field-note">3–40 characters. Not case-sensitive.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="label" for="r-password">Password</label>
+        <input
+          id="r-password"
+          type="password"
+          autocomplete="new-password"
+          [value]="password()"
+          (input)="password.set(value($event))"
+        />
+        @if (submitted() && passwordError(); as error) {
+          <span class="field-note field-error">{{ error }}</span>
+        } @else {
+          <span class="field-note">At least 8 characters.</span>
+        }
+      </div>
+
+      @if (problem(); as message) {
+        <p class="notice">{{ message }}</p>
+      }
+
+      <button type="submit" class="btn btn-primary btn-lg auth-submit" [disabled]="submitting()">
+        {{ submitting() ? 'Creating account…' : 'Create account' }}
+      </button>
+    </form>
+
+    <p class="auth-switch">
+      Already have an account? <a routerLink="/login">Sign in</a>
+    </p>
+  </div>
+</main>

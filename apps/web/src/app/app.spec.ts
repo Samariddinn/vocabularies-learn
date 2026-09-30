@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it } from 'vitest';
-import { App } from './app';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { Notebook } from './features/notebook/notebook';
 import { normalize, statusOf, type Entry } from './core/services/vocab-store';
 
 function entry(patch: Partial<Entry>): Entry {
@@ -23,8 +26,10 @@ function entry(patch: Partial<Entry>): Entry {
 }
 
 describe('vocab notebook', () => {
+  beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] }));
+
   it('renders the masthead', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(Notebook);
     await fixture.whenStable();
     expect(fixture.nativeElement.textContent).toContain('Vocabulary');
   });

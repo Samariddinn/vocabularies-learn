@@ -21,6 +21,17 @@
       <button type="button" class="btn" (click)="cycleTheme()" [attr.aria-label]="'Theme: ' + theme()">
         {{ theme() === 'system' ? 'Auto' : theme() === 'light' ? 'Light' : 'Dark' }}
       </button>
+      @if (me(); as user) {
+        <span class="masthead-user" title="Signed in">
+          {{ user.login }}
+          @if (user.role === 'admin') {
+            <span class="masthead-role">admin</span>
+          }
+        </span>
+      }
+      <button type="button" class="btn" (click)="logout()">
+        Log out
+      </button>
     </div>
   </div>
 </header>
