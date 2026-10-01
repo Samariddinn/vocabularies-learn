@@ -80,14 +80,14 @@
     </div>
 
     <p class="rail-note">
-      Words live in this browser's storage. Export a backup now and then, so clearing
-      the browser can't take them with it.
+      Words are saved in your account. Edits and drill progress aren't synced yet,
+      so they reset when you reload the page.
     </p>
   </aside>
 
   <section class="column">
     @if (!store.ready()) {
-      <p class="label">Opening the notebook…</p>
+      <p class="label">Loading your words…</p>
     } @else if (tab() === 'notebook') {
       <app-library (edit)="startEdit($event)" (create)="openComposer()" />
     } @else {

@@ -134,8 +134,8 @@
   </div>
 
   <div class="composer-foot">
-    <button type="submit" class="btn btn-primary btn-lg">
-      {{ editing() ? 'Save changes' : 'Add word' }}
+    <button type="submit" class="btn btn-primary btn-lg" [disabled]="saving()">
+      {{ editing() ? 'Save changes' : saving() ? 'Saving…' : 'Add word' }}
     </button>
     <button type="button" class="btn btn-lg" (click)="cancel()">
       Cancel

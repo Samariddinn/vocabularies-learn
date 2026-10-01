@@ -1,4 +1,6 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { Vocabulary, VocabulariesApi, toCreateRequest } from './vocabularies-api';
 
 export interface Entry {
   id: string;
@@ -25,10 +27,6 @@ export type EntryDraft = Pick<Entry, 'word' | 'reading' | 'pos' | 'meaning' | 'e
 /** Consecutive correct spellings before a word counts as memorized. */
 export const MASTERY_STREAK = 5;
 
-const DB_NAME = 'vocab-notebook';
-const DB_VERSION = 1;
-const STORE = 'entries';
-
 export function statusOf(entry: Entry): Status {
   if (entry.streak >= MASTERY_STREAK) return 'known';
   if (entry.attempts > 0) return 'learning';
@@ -44,21 +42,25 @@ export function normalize(value: string): string {
     .replace(/[.!?,;:]+$/, '');
 }
 
-const STARTER_WORDS: EntryDraft[] = [];
-
 /**
- * Everything lives in IndexedDB on this machine. The signal below is the working
- * copy the UI renders; every mutation writes through to disk.
+ * The logged-in user's words. The server (GET /vocabularies) is the only source:
+ * the list is loaded from it and nothing is kept in the browser's storage.
+ *
+ * Adding a word goes through the API first. Edits, deletes and drill progress
+ * only change this in-memory copy until the backend has endpoints for them —
+ * they are lost on reload.
  */
 @Injectable({ providedIn: 'root' })
 export class VocabStore {
-  private db: IDBDatabase | null = null;
+  private readonly api = inject(VocabulariesApi);
   private readonly all = signal<Entry[]>([]);
 
   readonly entries = computed(() =>
     [...this.all()].sort((a, b) => b.createdAt - a.createdAt),
   );
+  /** False while the list is being loaded from the server. */
   readonly ready = signal(false);
+  /** Set when the server couldn't be reached or refused the request. */
   readonly storageError = signal<string | null>(null);
 
   readonly counts = computed(() => {
@@ -78,84 +80,27 @@ export class VocabStore {
     return [...seen.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   });
 
-  constructor() {
-    this.open();
-  }
-
-  private async open(): Promise<void> {
-    if (typeof indexedDB === 'undefined') {
-      this.storageError.set('This browser has no IndexedDB, so nothing will be saved.');
-      this.ready.set(true);
-      return;
-    }
+  /** Loads the user's words from the server, replacing whatever was shown before. */
+  async load(): Promise<void> {
+    this.ready.set(false);
     try {
-      this.db = await new Promise<IDBDatabase>((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onupgradeneeded = () => {
-          const db = request.result;
-          if (!db.objectStoreNames.contains(STORE)) {
-            db.createObjectStore(STORE, { keyPath: 'id' });
-          }
-        };
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-
-      const stored = await this.readAll();
-      if (stored.length === 0) {
-        const seeded = STARTER_WORDS.map((draft) => this.build(draft));
-        await Promise.all(seeded.map((entry) => this.put(entry)));
-        this.all.set(seeded);
-      } else {
-        // Entries saved before collocations existed have no array.
-        this.all.set(stored.map((entry) => ({ ...entry, collocations: entry.collocations ?? [] })));
-      }
-    } catch (error) {
-      this.storageError.set(
-        `Could not open the local database (${describe(error)}). Changes will be lost when you close the tab.`,
-      );
+      const words = await firstValueFrom(this.api.list());
+      this.all.set(words.map(fromServer));
+      this.storageError.set(null);
+    } catch {
+      // 401 is handled by the auth interceptor (logs out → /login).
+      this.all.set([]);
+      this.storageError.set("Couldn't load your words from the server. Check that the API is running, then reload.");
     } finally {
       this.ready.set(true);
     }
   }
 
-  private readAll(): Promise<Entry[]> {
-    return new Promise((resolve, reject) => {
-      if (!this.db) return resolve([]);
-      const request = this.db.transaction(STORE, 'readonly').objectStore(STORE).getAll();
-      request.onsuccess = () => resolve(request.result as Entry[]);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  private put(entry: Entry): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.db) return resolve();
-      const request = this.db.transaction(STORE, 'readwrite').objectStore(STORE).put(entry);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  private drop(id: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.db) return resolve();
-      const request = this.db.transaction(STORE, 'readwrite').objectStore(STORE).delete(id);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  private build(draft: EntryDraft): Entry {
-    return {
-      ...draft,
-      id: crypto.randomUUID(),
-      createdAt: Date.now(),
-      reviewedAt: null,
-      streak: 0,
-      attempts: 0,
-      correct: 0,
-    };
+  /** Forgets the list — call on logout so the next user doesn't see it. */
+  clear(): void {
+    this.all.set([]);
+    this.ready.set(false);
+    this.storageError.set(null);
   }
 
   /** Returns the existing entry when the word is already in the notebook. */
@@ -164,27 +109,21 @@ export class VocabStore {
     return this.all().find((entry) => normalize(entry.word) === needle);
   }
 
-  async add(draft: EntryDraft): Promise<Entry> {
-    const entry = this.build(draft);
+  /** Adds a word the server has just saved (the response of POST /vocabularies/create). */
+  addFromServer(word: Vocabulary): Entry {
+    const entry = fromServer(word);
     this.all.update((list) => [...list, entry]);
-    await this.save(entry);
     return entry;
   }
 
+  // ---- in-memory only until the backend has PATCH / DELETE / practice endpoints ----
+
   async update(id: string, patch: Partial<Entry>): Promise<void> {
-    const next = this.all().map((entry) => (entry.id === id ? { ...entry, ...patch } : entry));
-    this.all.set(next);
-    const changed = next.find((entry) => entry.id === id);
-    if (changed) await this.save(changed);
+    this.all.update((list) => list.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)));
   }
 
   async remove(id: string): Promise<void> {
     this.all.update((list) => list.filter((entry) => entry.id !== id));
-    try {
-      await this.drop(id);
-    } catch (error) {
-      this.storageError.set(`Could not delete from storage (${describe(error)}).`);
-    }
   }
 
   /** Records one written attempt and moves the word along its streak. */
@@ -236,7 +175,10 @@ export class VocabStore {
     return JSON.stringify({ app: 'vocab-notebook', version: 1, entries: this.entries() }, null, 2);
   }
 
-  /** Merges a backup in by word; returns how many were added and how many already existed. */
+  /**
+   * Imports a backup file by sending each new word to the server.
+   * Words already in the notebook (or rejected by the server) are skipped.
+   */
   async importJson(raw: string): Promise<{ added: number; skipped: number }> {
     const parsed: unknown = JSON.parse(raw);
     const incoming = Array.isArray(parsed)
@@ -248,46 +190,50 @@ export class VocabStore {
     let skipped = 0;
     for (const candidate of incoming as Partial<Entry>[]) {
       if (!candidate?.word || typeof candidate.word !== 'string') continue;
-      if (this.findByWord(candidate.word)) {
+      if (!candidate.meaning || this.findByWord(candidate.word)) {
         skipped++;
         continue;
       }
-      const entry: Entry = {
-        id: typeof candidate.id === 'string' ? candidate.id : crypto.randomUUID(),
-        word: candidate.word,
+      const draft: EntryDraft = {
+        word: candidate.word.trim(),
+        meaning: candidate.meaning,
         reading: candidate.reading ?? '',
         pos: candidate.pos ?? '',
-        meaning: candidate.meaning ?? '',
         example: candidate.example ?? '',
         collocations: Array.isArray(candidate.collocations)
           ? candidate.collocations.filter((c) => typeof c === 'string')
           : [],
-        tags: Array.isArray(candidate.tags) ? candidate.tags.filter((t) => typeof t === 'string') : [],
-        createdAt: typeof candidate.createdAt === 'number' ? candidate.createdAt : Date.now(),
-        reviewedAt: typeof candidate.reviewedAt === 'number' ? candidate.reviewedAt : null,
-        streak: typeof candidate.streak === 'number' ? candidate.streak : 0,
-        attempts: typeof candidate.attempts === 'number' ? candidate.attempts : 0,
-        correct: typeof candidate.correct === 'number' ? candidate.correct : 0,
+        tags: [],
       };
-      this.all.update((list) => [...list, entry]);
-      await this.save(entry);
-      added++;
+      try {
+        this.addFromServer(await firstValueFrom(this.api.create(toCreateRequest(draft))));
+        added++;
+      } catch {
+        skipped++; // duplicate on the server, invalid field, …
+      }
     }
     return { added, skipped };
   }
-
-  private async save(entry: Entry): Promise<void> {
-    try {
-      await this.put(entry);
-      this.storageError.set(null);
-    } catch (error) {
-      this.storageError.set(`Could not save "${entry.word}" (${describe(error)}).`);
-    }
-  }
 }
 
-function describe(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (error && typeof error === 'object' && 'name' in error) return String(error.name);
-  return 'unknown error';
+/** Converts a row from the API into the notebook's Entry shape. */
+function fromServer(word: Vocabulary): Entry {
+  return {
+    id: word.id,
+    word: word.word,
+    reading: word.pronunciation ?? '',
+    pos: word.part_of_speech ?? '',
+    meaning: word.meaning,
+    example: word.sentences ?? '',
+    collocations: (word.collocations ?? '')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean),
+    tags: [],
+    createdAt: Date.parse(word.created_at) || Date.now(),
+    reviewedAt: word.reviewed_at ? Date.parse(word.reviewed_at) : null,
+    streak: word.streak,
+    attempts: word.attempts,
+    correct: word.correct,
+  };
 }

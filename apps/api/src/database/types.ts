@@ -22,6 +22,29 @@ export interface Users {
   updated_at: Generated<Timestamp>;
 }
 
+export interface Vocabularies {
+  attempts: Generated<number>;
+  collocations: string | null;
+  correct: Generated<number>;
+  created_at: Generated<Timestamp>;
+  id: Generated<string>;
+  level: string | null;
+  meaning: string;
+  part_of_speech: string | null;
+  pronunciation: string | null;
+  reviewed_at: Timestamp | null;
+  sentences: string | null;
+  /**
+   * 0 = new (never drilled), 1 = learning, 2 = known (memorized)
+   */
+  status: Generated<number>;
+  streak: Generated<number>;
+  updated_at: Generated<Timestamp>;
+  user_id: string;
+  word: string;
+}
+
 export interface DB {
   users: Users;
+  vocabularies: Vocabularies;
 }

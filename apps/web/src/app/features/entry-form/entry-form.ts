@@ -13,6 +13,9 @@ import {
 import { Dictionary, Lookup, PARTS_OF_SPEECH } from '../../core/services/dictionary';
 import { SpeakButton } from '../../shared/components/speak-button/speak-button';
 import { Entry, VocabStore } from '../../core/services/vocab-store';
+import { HttpErrorResponse } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { VocabulariesApi, toCreateRequest } from '../../core/services/vocabularies-api';
 
 /** How long typing has to pause before the word is looked up. */
 const LOOKUP_DELAY_MS = 600;
@@ -26,6 +29,7 @@ const LOOKUP_DELAY_MS = 600;
 export class EntryForm {
   private readonly store = inject(VocabStore);
   private readonly dictionary = inject(Dictionary);
+  private readonly vocabulariesApi = inject(VocabulariesApi);
 
   readonly editing = input<Entry | null>(null);
   readonly done = output<void>();
@@ -42,6 +46,8 @@ export class EntryForm {
   protected readonly collocations = signal('');
   protected readonly tags = signal('');
   protected readonly problem = signal<string | null>(null);
+  /** True while a new word is being sent to the server. */
+  protected readonly saving = signal(false);
 
   protected readonly partsOfSpeech = PARTS_OF_SPEECH;
   protected readonly lookup = signal<Lookup | null>(null);
@@ -199,8 +205,21 @@ export class EntryForm {
       this.problem.set(`"${clash.word}" is already in the notebook.`);
       return;
     }
+    if (this.saving()) return;
 
-    await this.store.add(draft);
+    // Save on the server; show it in the list only once the server has accepted it.
+    this.saving.set(true);
+    this.problem.set(null);
+    try {
+      const saved = await firstValueFrom(this.vocabulariesApi.create(toCreateRequest(draft)));
+      this.store.addFromServer(saved);
+    } catch (error) {
+      this.problem.set(describeSaveError(error));
+      return;
+    } finally {
+      this.saving.set(false);
+    }
+
     this.reset();
     this.added.emit(word);
     this.done.emit();
@@ -229,5 +248,25 @@ export class EntryForm {
 
   protected value(event: Event): string {
     return (event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
+  }
+}
+
+/** Turns a failed save into a sentence for the form. */
+function describeSaveError(error: unknown): string {
+  if (!(error instanceof HttpErrorResponse)) return 'Could not save the word. Please try again.';
+  switch (error.status) {
+    case 0:
+      return "Can't reach the server, so the word wasn't saved. Is the API running?";
+    case 401:
+      return 'Your session has expired. Sign in again.';
+    case 409:
+      return 'This word is already saved in your account.';
+    case 400: {
+      // Nest's ValidationPipe sends { message: string[] }
+      const message = error.error?.message;
+      return Array.isArray(message) ? message.join(' ') : 'Some fields are not valid.';
+    }
+    default:
+      return 'The server could not save the word. Please try again.';
   }
 }

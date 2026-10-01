@@ -38,7 +38,11 @@ export class Notebook {
         // 401 is handled by the auth interceptor (logs out → /login).
         error: () => this.me.set(null),
       });
+
+    // The word list comes from the server only.
+    this.store.load();
   }
+
   private readonly dialog = viewChild<ElementRef<HTMLDialogElement>>('composerDialog');
   private readonly form = viewChild(EntryForm);
 
@@ -49,6 +53,7 @@ export class Notebook {
   protected readonly message = signal<string | null>(null);
 
   protected logout(): void {
+    this.store.clear(); // don't leave this user's words in memory for the next one
     this.session.end();
     this.router.navigate(['/login']);
   }
